@@ -1,3 +1,11 @@
+function toggleDebate(element) {
+    const perspectives = element.nextElementSibling;
+    const expandIcon = element.querySelector('.expand-icon');
+    
+    perspectives.classList.toggle('collapsed');
+    expandIcon.classList.toggle('expanded');
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Debaters script loaded');
     
