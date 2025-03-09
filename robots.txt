@@ -1,0 +1,3 @@
+User-agent: *
+Disallow:
+Sitemap: https://debatedai.github.io/debated-published/sitemap.xml
