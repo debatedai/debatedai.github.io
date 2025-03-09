@@ -2,17 +2,17 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
     <title>Posts on Debated</title>
-    <link>https://debatedai.github.io/debated-published/posts/</link>
+    <link>https://debatedai.github.io/posts/</link>
     <description>Recent content in Posts on Debated</description>
     <generator>Hugo -- 0.125.7</generator>
     <language>en-us</language>
     <lastBuildDate>Fri, 22 Mar 2024 00:00:00 +0000</lastBuildDate>
-    <atom:link href="https://debatedai.github.io/debated-published/posts/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="https://debatedai.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Welcome to Daily Stories</title>
-      <link>https://debatedai.github.io/debated-published/posts/welcome/</link>
+      <link>https://debatedai.github.io/posts/welcome/</link>
       <pubDate>Fri, 22 Mar 2024 00:00:00 +0000</pubDate>
-      <guid>https://debatedai.github.io/debated-published/posts/welcome/</guid>
+      <guid>https://debatedai.github.io/posts/welcome/</guid>
       <description>Welcome to our daily storytelling journey</description>
     </item>
   </channel>
