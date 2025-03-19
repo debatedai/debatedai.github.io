@@ -1,73 +1,97 @@
-function toggleDebate(element) {
-    const perspectives = element.nextElementSibling;
-    const expandIcon = element.querySelector('.expand-icon');
-    
-    perspectives.classList.toggle('collapsed');
-    expandIcon.classList.toggle('expanded');
-}
-
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Debaters script loaded');
     
-    const debaterProfiles = document.querySelectorAll('.debater-profile');
-    console.log('Found debater profiles:', debaterProfiles.length);
-    
-    let activeInfo = null;
-
-    function hideAllInfos() {
-        document.querySelectorAll('.debater-info').forEach(info => {
-            info.style.display = 'none';
-        });
-        activeInfo = null;
-    }
-
-    // Initially hide all info panels
-    hideAllInfos();
-
-    debaterProfiles.forEach(profile => {
-        const avatar = profile.querySelector('.debater-avatar');
-        const info = profile.querySelector('.debater-info');
+    // Detailed logging and error handling
+    try {
+        const debaterProfiles = document.querySelectorAll('.debater-profile');
+        console.log('Found debater profiles:', debaterProfiles.length);
         
-        if (avatar && info) {
-            // Set initial styles
-            info.style.cssText = `
-                position: absolute;
-                top: 120px;
-                left: 50%;
-                transform: translateX(-50%);
-                width: 280px;
-                background: var(--entry);
-                padding: 1.5rem;
-                border-radius: 8px;
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-                border: 1px solid var(--border);
-                text-align: left;
-                z-index: 100;
-                display: none;
-            `;
+        if (debaterProfiles.length === 0) {
+            console.error('No debater profiles found on the page');
+            return;
+        }
 
+        let activeInfo = null;
+
+        function hideAllInfos() {
+            const infoPanels = document.querySelectorAll('.debater-info');
+            infoPanels.forEach(info => {
+                if (info) {
+                    info.classList.add('hidden');
+                } else {
+                    console.warn('Encountered null info panel during hideAllInfos');
+                }
+            });
+            activeInfo = null;
+        }
+
+        // Initially hide all info panels
+        hideAllInfos();
+
+        debaterProfiles.forEach((profile, index) => {
+            // Updated selector to handle nested structure
+            const avatar = profile.querySelector('.debater-content .debater-avatar');
+            const info = profile.querySelector('.debater-content .debater-info');
+            
+            if (!avatar) {
+                console.error(`No avatar found for profile ${index}`, profile);
+                return;
+            }
+
+            if (!info) {
+                console.error(`No info panel found for profile ${index}`, profile);
+                return;
+            }
+
+            // Explicit null check before adding event listener
             avatar.addEventListener('click', function(event) {
-                console.log('Avatar clicked');
+                console.log(`Avatar ${index} clicked`, { avatar, info });
                 event.stopPropagation();
                 
-                if (info === activeInfo) {
-                    // If clicking the active avatar, hide it
-                    hideAllInfos();
-                } else {
+                // Explicit null checks
+                if (!info) {
+                    console.error(`Info panel is null for avatar ${index}`);
+                    return;
+                }
+
+                if (info.classList.contains('hidden')) {
                     // Hide any active info panel
                     hideAllInfos();
                     // Show this info panel
-                    info.style.display = 'block';
+                    info.classList.remove('hidden');
                     activeInfo = info;
+                } else {
+                    // If info is already visible, hide it
+                    info.classList.add('hidden');
+                    activeInfo = null;
                 }
             });
-        }
-    });
+        });
 
-    // Close info panel when clicking outside
-    document.addEventListener('click', function(event) {
-        if (!event.target.closest('.debater-profile')) {
-            hideAllInfos();
-        }
-    });
+        // Close info panel when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.debater-profile')) {
+                hideAllInfos();
+            }
+        });
+
+    } catch (error) {
+        console.error('Critical error in debaters script:', error);
+    }
 });
+
+// Utility function for debugging
+function debugDOMStructure() {
+    const profiles = document.querySelectorAll('.debater-profile');
+    console.log('Debugging DOM Structure:');
+    profiles.forEach((profile, index) => {
+        console.log(`Profile ${index}:`, {
+            profile: profile,
+            avatarExists: !!profile.querySelector('.debater-content .debater-avatar'),
+            infoExists: !!profile.querySelector('.debater-content .debater-info')
+        });
+    });
+}
+
+// Optional: Call debug function after a short delay to ensure DOM is fully loaded
+setTimeout(debugDOMStructure, 500);

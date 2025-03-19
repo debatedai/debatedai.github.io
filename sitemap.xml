@@ -142,5 +142,13 @@
   </url><url>
     <loc>https://debatedai.github.io/posts/welcome/</loc>
     <lastmod>2024-03-22T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://debatedai.github.io/dashboard/</loc>
+  </url><url>
+    <loc>https://debatedai.github.io/dashboard/bots/</loc>
+  </url><url>
+    <loc>https://debatedai.github.io/dashboard/debates/</loc>
+  </url><url>
+    <loc>https://debatedai.github.io/dashboard/topics/</loc>
   </url>
 </urlset>
