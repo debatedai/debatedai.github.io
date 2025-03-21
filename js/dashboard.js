@@ -101,7 +101,7 @@ function initDashboard() {
                                     <div class="bot-beliefs">
                                         ${bot.beliefs.map(belief => `<span class="belief-tag">${belief}</span>`).join('')}
                                     </div>
-                                    <button onclick="requestDebate('${bot.id}')" class="debate-btn">Request Debate</button>
+                                    <button onclick="showJoinDebateModal('${bot.id}')" class="debate-btn">Join Debate</button>
                                 </div>
                             `).join('')
                         }
@@ -202,6 +202,83 @@ function initDashboard() {
                 .debate-btn:hover {
                     opacity: 0.9;
                 }
+
+                /* Join Debate Modal */
+                .join-debate-modal {
+                    display: none;
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(0, 0, 0, 0.5);
+                    z-index: 1000;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                .join-debate-content {
+                    background: var(--theme);
+                    padding: 2rem;
+                    border-radius: var(--radius);
+                    max-width: 600px;
+                    width: 90%;
+                    max-height: 80vh;
+                    overflow-y: auto;
+                }
+
+                .topic-list {
+                    margin: 1rem 0;
+                }
+
+                .topic-item {
+                    padding: 1rem;
+                    border: 1px solid var(--border);
+                    border-radius: var(--radius);
+                    margin-bottom: 1rem;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                }
+
+                .topic-item:hover {
+                    border-color: var(--primary);
+                    transform: translateY(-2px);
+                }
+
+                .topic-item h3 {
+                    margin: 0 0 0.5rem 0;
+                    color: var(--primary);
+                }
+
+                .topic-item p {
+                    margin: 0;
+                    color: var(--secondary);
+                }
+
+                .modal-actions {
+                    display: flex;
+                    justify-content: flex-end;
+                    gap: 1rem;
+                    margin-top: 1rem;
+                }
+
+                .modal-actions button {
+                    padding: 0.5rem 1rem;
+                    border-radius: var(--radius);
+                    cursor: pointer;
+                }
+
+                .modal-actions .cancel-btn {
+                    background: var(--border);
+                    color: var(--primary);
+                    border: none;
+                }
+
+                .modal-actions .join-btn {
+                    background: var(--primary);
+                    color: var(--theme);
+                    border: none;
+                }
             `;
             document.head.appendChild(style);
         } catch (error) {
@@ -228,6 +305,7 @@ function initDashboard() {
                         user_id
                     )
                 `)
+                .eq('user_id', userId)
                 .order('created_at', { ascending: false });
 
             if (error) {
@@ -235,13 +313,55 @@ function initDashboard() {
                 throw error;
             }
 
-            // Log the full response for debugging
-            console.log('Topics response:', { topics, error });
-
-            if (error) throw error;
-
             if (!topics.length) {
                 topicsList.innerHTML = '<p>No topics submitted yet. Submit your first topic!</p>';
+                return;
+            }
+
+            topicsList.innerHTML = topics.map(topic => `
+                <div class="topic-card">
+                    <h3>${topic.title}</h3>
+                    <p>${topic.content}</p>
+                    <div class="topic-stats">
+                        <span>${topic.votes || 0} votes</span>
+                        <span>Status: ${topic.status || 'New'}</span>
+                    </div>
+                </div>
+            `).join('');
+        } catch (error) {
+            console.error('Error loading topics:', error);
+            topicsList.innerHTML = '<p class="error">Failed to load topics</p>';
+        }
+    }
+
+    // Load voteable topics
+    async function loadVoteableTopics() {
+        const topicsList = document.querySelector('[data-voteable-topics-list]');
+        if (!topicsList) return;
+
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const userId = session?.user?.id;
+
+            const { data: topics, error } = await supabase
+                .from('debate_topics')
+                .select(`
+                    *,
+                    topic_votes!topic_votes_topic_id_fkey (
+                        topic_id,
+                        user_id
+                    )
+                `)
+                .not('status', 'eq', 'completed')
+                .order('votes', { ascending: false });
+
+            if (error) {
+                console.error('Error loading voteable topics:', error);
+                throw error;
+            }
+
+            if (!topics.length) {
+                topicsList.innerHTML = '<p>No topics available for voting.</p>';
                 return;
             }
 
@@ -262,8 +382,98 @@ function initDashboard() {
                 </div>
             `).join('');
         } catch (error) {
-            console.error('Error loading topics:', error);
+            console.error('Error loading voteable topics:', error);
             topicsList.innerHTML = '<p class="error">Failed to load topics</p>';
+        }
+    }
+
+    // Join Debate Modal
+    async function showJoinDebateModal(botId) {
+        try {
+            // First get the topic IDs that the bot is already debating
+            const { data: existingActions, error: actionsError } = await supabase
+                .from('debate_actions')
+                .select('topic_id')
+                .eq('bot_id', botId)
+                .in('status', ['pending', 'in_progress']);
+
+            if (actionsError) throw actionsError;
+
+            // Get the topic IDs to exclude
+            const excludeTopicIds = existingActions.map(action => action.topic_id);
+
+            // Get completed topics that the bot hasn't already debated
+            const { data: topics, error: topicsError } = await supabase
+                .from('debate_topics')
+                .select('id, title, content, created_at, user_id, votes, status')
+                .eq('status', 'completed')
+                .not('id', 'in', excludeTopicIds.length > 0 ? `(${excludeTopicIds.join(',')})` : '(00000000-0000-0000-0000-000000000000)');
+
+            if (topicsError) throw topicsError;
+
+            // Create modal
+            const modal = document.createElement('div');
+            modal.className = 'join-debate-modal';
+            modal.style.display = 'flex';
+            modal.innerHTML = `
+                <div class="join-debate-content">
+                    <h2>Select a Topic to Join</h2>
+                    <div class="topic-list">
+                        ${topics.length === 0 ? '<p>No available topics to join.</p>' :
+                            topics.map(topic => `
+                                <div class="topic-item" onclick="joinDebate('${botId}', '${topic.id}')">
+                                    <h3>${topic.title}</h3>
+                                    <p>${topic.content}</p>
+                                    <small>${topic.votes || 0} votes</small>
+                                </div>
+                            `).join('')
+                        }
+                    </div>
+                    <div class="modal-actions">
+                        <button class="cancel-btn" onclick="closeJoinDebateModal()">Cancel</button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+
+            // Close on background click
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    closeJoinDebateModal();
+                }
+            });
+        } catch (error) {
+            console.error('Error showing join debate modal:', error);
+            showError('Failed to load available topics');
+        }
+    }
+
+    function closeJoinDebateModal() {
+        const modal = document.querySelector('.join-debate-modal');
+        if (modal) {
+            modal.remove();
+        }
+    }
+
+    async function joinDebate(botId, topicId) {
+        try {
+            const { error } = await supabase
+                .from('debate_actions')
+                .insert({
+                    bot_id: botId,
+                    topic_id: topicId,
+                    status: 'pending'
+                });
+
+            if (error) throw error;
+
+            closeJoinDebateModal();
+            showSuccess('Successfully joined debate');
+            loadBots(); // Refresh the bots list
+        } catch (error) {
+            console.error('Error joining debate:', error);
+            showError('Failed to join debate');
         }
     }
 
@@ -350,7 +560,7 @@ function initDashboard() {
                 });
 
             if (error) throw error;
-            loadTopics();
+            loadVoteableTopics();
         } catch (error) {
             console.error('Error voting for topic:', error);
             showError('Failed to vote for topic');
@@ -372,7 +582,7 @@ function initDashboard() {
                 .eq('user_id', session.user.id);
 
             if (deleteError) throw deleteError;
-            loadTopics();
+            loadVoteableTopics();
             showSuccess('Vote removed successfully');
         } catch (error) {
             console.error('Error removing vote:', error);
@@ -461,6 +671,7 @@ function initDashboard() {
     loadStats();
     loadBots();
     loadTopics();
+    loadVoteableTopics();
 
     // Export functions to window for global access
     window.showBotForm = showBotForm;
@@ -473,6 +684,9 @@ function initDashboard() {
     window.voteTopic = voteTopic;
     window.unvoteTopic = unvoteTopic;
     window.deleteBot = deleteBot;
+    window.showJoinDebateModal = showJoinDebateModal;
+    window.closeJoinDebateModal = closeJoinDebateModal;
+    window.joinDebate = joinDebate;
 }
 
 // Wait for both DOM and Supabase to be ready

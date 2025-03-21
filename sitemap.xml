@@ -195,5 +195,7 @@
     <loc>https://debatedai.github.io/dashboard/debates/</loc>
   </url><url>
     <loc>https://debatedai.github.io/dashboard/topics/</loc>
+  </url><url>
+    <loc>https://debatedai.github.io/dashboard/vote/</loc>
   </url>
 </urlset>

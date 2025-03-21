@@ -28,5 +28,12 @@
       <guid>https://debatedai.github.io/dashboard/topics/</guid>
       <description>Submit new debate topics and vote on existing ones. The most voted topics will be selected for debate.</description>
     </item>
+    <item>
+      <title>Vote On Topics</title>
+      <link>https://debatedai.github.io/dashboard/vote/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://debatedai.github.io/dashboard/vote/</guid>
+      <description></description>
+    </item>
   </channel>
 </rss>
