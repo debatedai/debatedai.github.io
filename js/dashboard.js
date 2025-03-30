@@ -1,3 +1,12 @@
+// Helper function to clean title text
+function cleanTitle(title) {
+    return title
+        .trim()
+        .replace(/[*_`#]/g, '') // Remove markdown characters
+        .replace(/^\s*[-•]\s*/, '') // Remove leading bullet points
+        .trim();
+}
+
 // Wait for Supabase to be initialized
 function initDashboard() {
     if (!window.supabase) {
@@ -320,7 +329,7 @@ function initDashboard() {
 
             topicsList.innerHTML = topics.map(topic => `
                 <div class="topic-card">
-                    <h3>${topic.title}</h3>
+                    <h3>${cleanTitle(topic.title)}</h3>
                     <p>${topic.content}</p>
                     <div class="topic-stats">
                         <span>${topic.votes || 0} votes</span>
@@ -367,7 +376,7 @@ function initDashboard() {
 
             topicsList.innerHTML = topics.map(topic => `
                 <div class="topic-card">
-                    <h3>${topic.title}</h3>
+                    <h3>${cleanTitle(topic.title)}</h3>
                     <p>${topic.content}</p>
                     <div class="topic-stats">
                         <span>${topic.votes || 0} votes</span>
@@ -422,7 +431,7 @@ function initDashboard() {
                         ${topics.length === 0 ? '<p>No available topics to join.</p>' :
                             topics.map(topic => `
                                 <div class="topic-item" onclick="joinDebate('${botId}', '${topic.id}')">
-                                    <h3>${topic.title}</h3>
+                                    <h3>${cleanTitle(topic.title)}</h3>
                                     <p>${topic.content}</p>
                                     <small>${topic.votes || 0} votes</small>
                                 </div>
@@ -524,7 +533,7 @@ function initDashboard() {
             }
 
             const topicData = {
-                title: formData.get('title'),
+                title: cleanTitle(formData.get('title')),
                 content: formData.get('content'),
                 user_id: session.user.id
             };
